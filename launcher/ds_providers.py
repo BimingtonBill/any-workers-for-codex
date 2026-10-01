@@ -3,7 +3,7 @@
     python ds_providers.py resolve --provider meta [--tier contributor] --dir <project>   JSON for the launcher
     python ds_providers.py list                                                            the providers
 
-The registry is providers.json beside this file. ~/.claude-deepseek/providers.json (or DS_PROVIDERS_USER) holds
+The registry is providers.json beside this file. ~/.codex-workers/providers.json (or DS_PROVIDERS_USER) holds
 the user's own additions and opt-ins, for example:
 
     {"contributorProjects": {"meta": ["C:/Projects/project-a"]}}

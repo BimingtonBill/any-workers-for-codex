@@ -13,7 +13,7 @@ spreads credit: ahead of that pace the launcher says to ease off, and well ahead
 provider (Claude sends it to DeepSeek instead). In the last two days of the period nothing holds until 98% is
 used: what is left at the renewal is lost.
 
-The user's plan is in ~/.claude-deepseek/providers.json (DS_PROVIDERS_USER), for example
+The user's plan is in ~/.codex-workers/providers.json (DS_PROVIDERS_USER), for example
     {"plans": {"xiaomi/token-plan": {"plan": "standard", "renews": "2026-10-01"}}}
 """
 import argparse

@@ -9,7 +9,7 @@
 #   2. "stateDir" in <Dir>\.deepseek-agents.json - absolute used as-is, otherwise joined onto <Dir>. A
 #      missing or unreadable file, bad JSON, or a missing or empty key falls through;
 #   3. <Dir>\local\agents, when <Dir>\local is an existing folder;
-#   4. $HOME\.claude-deepseek\agents.
+#   4. $HOME\.codex-workers\agents.
 #
 # Prints one line - that folder, absolute, with no trailing separator - and nothing else. It creates
 # nothing, never fails on a missing or malformed config, and always exits 0.
@@ -50,11 +50,11 @@ try {
     if (-not $stateDir) {
         # A folder, not any item named local (audit finding SDR-20260924-02; tools/ds_state.py uses is_dir()).
         if (Test-Path -LiteralPath (Join-Path $project 'local') -PathType Container) { $stateDir = Join-Path $project 'local\agents' }
-        else { $stateDir = Join-Path $HOME '.claude-deepseek\agents' }
+        else { $stateDir = Join-Path $HOME '.codex-workers\agents' }
     }
 } catch {
     # Nothing here may stop a caller: treat an unexpected failure as if nothing were configured.
-    $stateDir = Join-Path $HOME '.claude-deepseek\agents'
+    $stateDir = Join-Path $HOME '.codex-workers\agents'
 }
 
 $full = $stateDir

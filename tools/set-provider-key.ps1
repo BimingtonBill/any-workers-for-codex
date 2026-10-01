@@ -25,7 +25,7 @@ Write-Host ''
 Write-Host "Get one at https://$($p.keyPage) (sign in, create an API key, copy it)."
 if ($Tier -and $p.tiers.$Tier.trainsOnPrompts) {
     Write-Host "On the $Tier tier $($p.name) may train on what workers send it. Workers use it only in projects you list" -ForegroundColor Yellow
-    Write-Host 'yourself in ~/.claude-deepseek/providers.json, and only on their tracked files.' -ForegroundColor Yellow
+    Write-Host 'yourself in ~/.codex-workers/providers.json, and only on their tracked files.' -ForegroundColor Yellow
 }
 Write-Host ''
 Write-Host 'Paste the key below and press Enter. Nothing shows while you paste; that is normal.'
@@ -42,7 +42,7 @@ while ($true) {
     $urls = if ($tierInfo -and $tierInfo.baseUrls) { @($tierInfo.baseUrls) } elseif ($tierInfo -and $tierInfo.baseUrl) { @($tierInfo.baseUrl) } else { @($p.baseUrl) }
     $result = 'unconfirmed'; $workingUrl = $null; $lastError = ''
     # What each address answered, without the key, so Claude can read why a key was refused.
-    $checkLog = Join-Path $HOME '.claude-deepseek\key-check.log'
+    $checkLog = Join-Path $HOME '.codex-workers\key-check.log'
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $checkLog) | Out-Null
     Add-Content -LiteralPath $checkLog -Value "$(Get-Date -Format s) $Provider/$Tier key starts '$($key.Substring(0, [Math]::Min(3, $key.Length)))', $($key.Length) characters"
     foreach ($url in $urls) {
@@ -68,7 +68,7 @@ while ($true) {
     # Remember the address that worked and, for a subscription the user bought, make it this provider's default
     # tier: in the user's own settings, which ds_providers.py reads (never in a project).
     if ($workingUrl -and $urls.Count -gt 1 -or ($tierInfo -and $tierInfo.subscription -and $workingUrl)) {
-        $settingsPath = if ($env:DS_PROVIDERS_USER) { $env:DS_PROVIDERS_USER } else { Join-Path $HOME '.claude-deepseek\providers.json' }
+        $settingsPath = if ($env:DS_PROVIDERS_USER) { $env:DS_PROVIDERS_USER } else { Join-Path $HOME '.codex-workers\providers.json' }
         $settings = if (Test-Path -LiteralPath $settingsPath) { Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
         if (-not $settings.baseUrls) { $settings | Add-Member -NotePropertyName baseUrls -NotePropertyValue ([pscustomobject]@{}) -Force }
         $settings.baseUrls | Add-Member -NotePropertyName "$Provider/$Tier" -NotePropertyValue $workingUrl -Force

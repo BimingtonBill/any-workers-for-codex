@@ -57,7 +57,7 @@ def prepare(provider=None, tier=None, folder=None, spend_dir=None):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--provider'); ap.add_argument('--tier'); ap.add_argument('--dir')
-    ap.add_argument('--spend-dir', help='default: DS_SPEND_DIR or ~/.claude-deepseek/spend')
+    ap.add_argument('--spend-dir', help='default: DS_SPEND_DIR or ~/.codex-workers/spend')
     a = ap.parse_args(argv)
     out = prepare(a.provider, a.tier, a.dir, a.spend_dir)
     if hasattr(sys.stdout, 'reconfigure'):

@@ -1,153 +1,146 @@
-# Any Workers for Claude Code
+# Any Workers for Codex
 
-An add-on for [Claude Code](https://claude.com/claude-code) that gives Claude a team of cheap helpers.
-Claude stays in charge: it splits a job up, hands pieces to DeepSeek AI "workers" that run in the background
-on your computer, keeps working on its own part, and checks every result before using it. The heavy reading
-and drafting happens on DeepSeek, so your Claude plan lasts longer. It works in any project: a website, a
-Python script, a game, a Rust or .NET app.
+An independent Windows worker toolkit for Codex.
+Codex leads the work, delegates bounded tasks to cheaper API workers, checks their
+reports and diffs, and integrates accepted changes. **Claude Code is not required.**
 
-A typical worker task costs a few cents and a big one up to about 20 cents, so a $5 DeepSeek top-up goes a
-long way.
-
-Workers run on DeepSeek by default. Meta's Muse Spark and Xiaomi's MiMo can run workers too (`-Provider meta`,
-`-Provider xiaomi`, with their own keys, limits and pacing); see `docs/design/providers.md`. Formerly "DeepSeek
-agents for Claude Code".
-
-*An independent community project, not made or endorsed by Anthropic, DeepSeek, Meta or Xiaomi.*
+The paid workers run in a Python tool loop against Chat Completions, rather than
+through Claude Code or your Codex subscription. Your Codex app/CLI remains the
+orchestrator. This avoids assuming Anthropic-compatible providers support the
+Responses API used by Codex. Python's standard library is the only runtime dependency.
 
 ## Install
 
-You need a **Windows** computer, the **Claude desktop app** ([download](https://claude.ai/download)) with a
-plan that includes Claude Code, **Python 3** and **Git**, and a **DeepSeek account** with a little credit:
-sign up at [platform.deepseek.com](https://platform.deepseek.com), add credit under **Top up**, and create a
-key under **API keys**.
+Requirements: Windows, Codex app or CLI, Python 3.10+, Git for coding workers,
+and a funded DeepSeek account.
 
-Open the Claude desktop app, go to the **Code** tab, start a session, and paste this in:
+Download [the preview installer ZIP](https://github.com/BimingtonBill/any-workers-for-codex/releases/download/v0.1.0/any-workers-for-codex.zip),
+unzip it, double-click **install.cmd**, and restart Codex.
+Preview releases are listed on the [releases page](https://github.com/BimingtonBill/any-workers-for-codex/releases).
+To install from source instead:
 
-```text
-Please install "Any Workers for Claude Code" for me.
-
-1. Download https://github.com/BimingtonBill/any-workers-for-claude-code/releases/latest/download/any-workers-for-claude-code.zip into a new folder called "deepseek-agents-setup" in my Downloads folder, and unzip it there.
-2. Read setup.ps1 in the unzipped folder so you know what it does, then run it:
-   powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1
-   It installs the skills and checks for Python and Claude Code. If I haven't saved a DeepSeek API key yet, it opens a separate window where I type the key myself.
-3. Tell me in plain words what it reported and what I need to do next.
-
-Never ask me to type or paste my DeepSeek API key into this chat.
+```powershell
+git clone https://github.com/BimingtonBill/any-workers-for-codex.git
+cd any-workers-for-codex
 ```
 
-Say yes when Claude asks permission to download and run things. When a window asks for your **DeepSeek API
-key**, paste it there (nothing shows as you paste; that's normal) and press Enter. The key never goes into
-the chat, which would save it; the window stores it privately on your computer. Then **close and reopen the
-Claude app.**
+Then run:
 
-To install by hand instead, download the zip from the
-[latest release](https://github.com/BimingtonBill/any-workers-for-claude-code/releases/latest), unzip it,
-double-click **`install.cmd`**, and reopen the Claude app.
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File setup.ps1
+```
 
-## Using it
+Setup installs four skills in `%USERPROFILE%\.agents\skills`, backing up existing
+copies outside the skills directory. If needed, it opens a private window for
+your DeepSeek API key. Never paste keys into chat. Restart Codex after installing.
+To preview installation, run `tools/install-skill.ps1 -DryRun`.
+For a reversible test install use `setup.ps1 -Target <test-skills> -NoKeyWindow`.
+Uninstall by removing the four installed skill directories; restore any previous
+versions from `any-workers-backups` beside the skills directory. The installer
+does not edit Codex config.toml, account files, hooks or Claude settings.
 
-Ask Claude in plain words, in any project:
+## Use
 
-- *"Use DeepSeek workers to find every place this project reads its settings file."*
-- *"Have a DeepSeek web searcher find the latest version of this library and what changed."*
-- *"Get a DeepSeek coder to add a median function to stats.js, with tests, while you look at the bug."*
-- *"Get a DeepSeek worker to review the change you just made."*
+In Codex, invoke `$deepseek-agents`, or ask:
 
-Workers show up in Claude's **Background tasks** panel with names like
-`DeepSeek research #004: find where the game loads save files`. Three commands help too: `/deepseek-agents`
-switches it on for a session, `/delegation` sets how much Claude hands off, and `/spend-limit` shows and sets
-the budget.
+- "Use DeepSeek workers to trace where this project loads settings."
+- "Have an Any Workers coder add a median function with tests, then review it."
+- "Use a worker to review the diff for edge cases."
+- "Limit DeepSeek workers to $2 a day."
 
-## How it works
+`$delegation` controls levels 1–5; `$spend-limit` manages budgets;
+`$advisor-loop` gets a bounded second opinion. Codex still makes design decisions,
+checks evidence, runs commands and reviews changes before integrating them.
 
-![How a job flows through Claude and the DeepSeek workers](docs/flowchart.svg)
+Direct reader launch (from this source folder):
 
-There are four kinds of worker: **web searchers** look things up online, **readers** research, review and
-analyse, **coders** write code in their own copy of your project, and **leads** run a small team for a big
-job. Everything comes back to Claude, which is the only one that changes your files. Every job follows the
-same steps:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File launcher/ds-agent.ps1 -TaskFile brief.md -Dir C:\code\app -Kind research -Label research-001-settings
+```
 
-- **Research starts on the web**, then a reader checks the answers against your code.
-- **Every report opens with the same five lines** (done or not, verdict, summary, what's left, what's next),
-  so Claude reads those and opens the full report only when it needs to.
-- **Reviews re-run the tests themselves**, and a change a review says needs fixing isn't brought in until it is.
-- **It learns as it goes**: every worker gets a short map of your project, mistakes that reviews catch become
-  a pitfalls list coders read first, and a worker that starts to drift is told to wrap up.
+Readers get read/list/search tools. Coding workers get write_file only for exact
+owned paths in a separate git worktree created by `tools/ds_impl.ps1`:
 
-([`docs/flowchart.html`](docs/flowchart.html) is an interactive version: download it and open it in your browser.)
+```powershell
+# Run from your project. Use an absolute path to this kit's tool.
+powershell -NoProfile -ExecutionPolicy Bypass -File <kit>/tools/ds_impl.ps1 -Brief brief.md -Name impl-002-median -Files "stats.py,test_stats.py" -Accept "python -m unittest"
+```
 
-## How much Claude hands off
+The host runs acceptance commands and checks changed-file scope. Inspect the
+worktree diff, run an independent review, then explicitly integrate:
+`<kit>/tools/ds_impl.ps1 -Integrate impl-002-median`.
+The worker has no shell and cannot run its own acceptance tests.
 
-A delegation level from **1 to 5** sets how much work goes to DeepSeek. Higher uses less of your Claude plan,
-but more work is first done by DeepSeek, which is cheaper and less reliable, so Claude spends its time
-checking instead.
+Up to six read tasks run in parallel with `launcher/ds-spawn.ps1 -Dir <project>
+-Briefs "a.md,b.md" -NoCrosstalk`. Codex's shell tool can keep a long command
+running and retain its process/session id. There is no Claude Background tasks hook.
 
-| Level | What Claude does |
-|:---:|---|
-| **1** | Everything itself; DeepSeek only when you ask. |
-| **2** | Hands off research, reading and reviews; writes all code itself. |
-| **3** | *The default.* As 2, plus small, self-contained pieces of code. |
-| **4** | Plans, checks and fits the pieces together; DeepSeek does most exploring and coding. *Good for bigger projects.* |
-| **5** | Only manages: every task goes to DeepSeek unless it needs you. |
+Reports preserve the compact Status / Verdict / Summary / Left / Next opening.
+Each run saves report.md, transcript.jsonl, tools.jsonl and manifest.json, with
+start/end events in the shared manifest.jsonl. Default state and budgets live in
+`~/.codex-workers`; DS_STATE_DIR and DS_SPEND_DIR override their locations.
+An optional `.deepseek-agents.json` keeps the upstream project configuration name.
+Supported policy: denyRead, denyEdit, stateDir and defaults.mode. Reads reject
+traversal, links, .git, .env and harness configuration. Coding writes require an
+exact owned-file entry. These are bounded tools, not a general OS sandbox.
 
-At every level Claude talks to you, makes the design decisions, handles anything security-sensitive, and
-checks every piece of DeepSeek work before using it. Change it by telling Claude (*"set DeepSeek delegation
-to 4 for this project"*) or with `/delegation 4`.
+## Budgets and providers
 
-## Budgets
+```powershell
+python launcher/ds_spend.py status --offline
+python launcher/ds_spend.py set 2 --per day
+python launcher/ds_spend.py set 1.5 --per run
+```
 
-There's no limit until you set one, and each provider has its own. Tell Claude in any session, and it applies everywhere:
+The port reuses upstream daily/weekly pacing, admission checks, per-run caps and
+cost accounting. Checks occur between API responses, so an in-flight response can
+overshoot a cap. API errors and incomplete runs retain a partial report and ledger
+entry. Usage must be supplied by the provider; omission stops further work.
+Prices inherited from upstream are estimates, not a verified current bill. Adjust
+the `prices` override in limits.json when using a different DeepSeek model.
 
-- *"Limit DeepSeek to $2 a day."*: a daily or weekly limit, like Claude's own usage limits.
-- *"Make my DeepSeek credit last two weeks."*: each day gets an even share of what's left.
-- *"Stop any DeepSeek worker at $1.50."*: a cap per worker, which keeps what it had found.
+DeepSeek uses `https://api.deepseek.com/chat/completions` and `deepseek-flash` by
+default; pass -Model to override it. The OpenRouter `sol` registry entry has a
+Chat Completions endpoint and uses OPENROUTER_API_KEY; its live behavior is unverified.
+Meta and MiMo entries remain as upstream metadata but fail at launch because their
+Anthropic endpoints cannot be treated as verified Chat Completions endpoints.
+Training/contributor and subscription tiers fail explicitly.
 
-Spending is paced like cruise control: when it runs ahead, workers ease off step by step before the limit is
-reached. A worker that won't fit doesn't start: Claude runs the same work as a Sonnet helper instead. Claude tells you when your
-credit is very low. Spend figures are estimates at DeepSeek's list prices; the DeepSeek dashboard is the real
-bill.
+## Port differences
 
-Claude paces **its own** plan the same way: ahead of pace it hands more to DeepSeek, near a limit it only
-coordinates, and in the last day before the weekly reset it's told to use up what's left rather than lose it.
-It suggests `/compact` when a conversation is 70% full, since every message re-reads the whole conversation.
+This port supports repository research, file-based reviews, isolated coding,
+host-side parallel workers, delegation levels, reports and spend controls.
+It does **not** port Claude hooks, automatic Codex plan pacing, worker web search,
+worker shell, additional read roots, resume, worker leads, subagents or crosstalk.
+Unsupported options return setup error 2; -Effort is accepted for compatibility
+with upstream runners and uses the provider's default. Codex handles web and shell
+work using its own tools. Historical design documents describe the upstream
+project and should not be read as parity promises; see docs/upstream-README.md.
 
-## Is it safe?
+Exit codes: 0 finished, 1 worker failed/incomplete, 2 invalid setup/unsupported
+option, 3 timeout, 4 held/stopped by spending. A failed worker cannot pass the
+implementation runner's acceptance gate just because its tests happen to pass.
 
-- **Workers only see the project you point them at**, never your Claude account, chats or other folders.
-- **Your DeepSeek key stays on your computer**, saved for your Windows account only.
-- **Coders work in a separate copy** of your project and can only change the files they were given; Claude
-  reviews the changes before bringing them in.
-- **Web content is treated as unverified.** Web searchers can't see your project, and a worker that has read
-  the web can only change a separate copy.
-- **If a job needs a program you don't have**, Claude asks you to install it rather than working around it.
-- **It adds a hook to Claude Code** (in `~/.claude/settings.json`, backed up first). It names workers and
-  Claude's own helpers in the Background tasks panel and records them, runs Claude's helpers on Sonnet 5.5 unless
-  a session names another model, and adds short notes for Claude about budgets. It changes
-  nothing else. Install with `tools/install-skill.ps1 -NoHooks` to skip it, or delete the entries that
-  mention `ds_hook.py` to remove it.
+## Validation
 
-## If something goes wrong
+```powershell
+python -m unittest discover -s tests -v
+```
 
-| You see | What to do |
-|---|---|
-| `DEEPSEEK_API_KEY is not set` | Run `install.cmd` again; it reopens the key window. |
-| `DeepSeek rejected DEEPSEEK_API_KEY (401)` | The key is wrong or deleted. Create a new one at platform.deepseek.com and run `install.cmd` again. |
-| `balance is too low` / `402` | Add credit at [platform.deepseek.com/top_up](https://platform.deepseek.com/top_up). |
-| `Claude Code was not found` | Install the Claude desktop app and open its Code tab once. |
-| `it needs Python` | `winget install Python.Python.3.12`, then restart Claude. |
-| A worker seems stuck | Ask Claude: *"Show me the running DeepSeek workers and stop the stuck one."* |
+Tests use scripted responses and temporary projects, without API calls or paid
+usage. They cover tool restrictions, coding ownership, report/schema validation,
+tool-call continuation, budget stops, API failure accounting and installation.
+Real paid-provider execution still needs a live smoke test with your own key.
 
-## For the technically curious
+Codex skill format and discovery follow the
+[official skill documentation](https://developers.openai.com/codex/skills/).
+The default model and request format follow DeepSeek's
+[Chat Completions reference](https://api-docs.deepseek.com/api/create-chat-completion/).
 
-- `skill/`: the skills that teach Claude to lead workers, the `/delegation` and `/spend-limit` commands, and the hook.
-- `launcher/`: `ds-agent.ps1` starts a worker as a headless Claude Code process on DeepSeek's
-  Anthropic-compatible API, with its own permissions and a run record; plus spend limits and pacing.
-- `tools/`: coding tasks in isolated git worktrees (`ds_impl.ps1`), run status, project memory, audits,
-  and checkers.
-- `templates/`: a task template for each kind of worker.
-- `docs/design/`: how each part works, with the test evidence behind it.
+## Attribution
 
-## License
-
-MIT. See [`LICENSE`](LICENSE).
+Created by BimingtonBill, based on
+[Any Workers for Claude Code](https://github.com/BimingtonBill/any-workers-for-claude-code).
+This repository is independently distributed and maintained for Codex.
+MIT; original attribution and LICENSE preserved. An independent community project,
+not made or endorsed by OpenAI or the worker model providers.

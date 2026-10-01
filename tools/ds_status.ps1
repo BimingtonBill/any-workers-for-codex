@@ -16,7 +16,7 @@ $ErrorActionPreference = 'Stop'
 # DS_PROJECT or the current folder, and the launcher is the harness's. Copied into a project's tools\: the
 # project is DS_PROJECT or the folder above tools\, and the launcher is the installed skill's.
 $here = Split-Path -Parent $PSScriptRoot
-$skillDir = Join-Path $HOME '.claude\skills\deepseek-agents'
+$skillDir = Join-Path $HOME '.agents\skills\deepseek-agents'
 $inHarness = Test-Path (Join-Path $here 'launcher\ds-agent.ps1')
 # Installed as part of the skill, the launcher sits beside tools\ instead: act on the current folder too.
 $inSkill = -not $inHarness -and (Test-Path (Join-Path $here 'ds-agent.ps1'))
@@ -24,7 +24,7 @@ $root = if ($env:DS_PROJECT) { $env:DS_PROJECT } elseif ($inHarness -or $inSkill
 $agent = if ($inHarness) { Join-Path $here 'launcher\ds-agent.ps1' } elseif ($inSkill) { Join-Path $here 'ds-agent.ps1' } else { Join-Path $skillDir 'ds-agent.ps1' }
 $harness = if ($inHarness -or $inSkill) { $here } else { $skillDir }
 # The launcher's state folder: DS_STATE_DIR, the project's stateDir, local\agents when the project has
-# local\, else the shared ~\.claude-deepseek\agents. The rule lives in launcher/ds-state.ps1, found the
+# local\, else the shared ~\.codex-workers\agents. The rule lives in launcher/ds-state.ps1, found the
 # way $agent above is (harness, installed skill, or the skill's own folder).
 $stateScript = if ($inHarness) { Join-Path $here 'launcher\ds-state.ps1' } elseif ($inSkill) { Join-Path $here 'ds-state.ps1' } else { Join-Path $skillDir 'ds-state.ps1' }
 $stateDir = & $stateScript -Dir $root

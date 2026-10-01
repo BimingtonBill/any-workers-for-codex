@@ -18,7 +18,7 @@ $WaitFor = @($WaitFor -split ',' | ForEach-Object { $_.Trim() } | Where-Object {
 # DS_PROJECT or the current folder, and the launcher is the harness's. Copied into a project's tools\: the
 # project is DS_PROJECT or the folder above tools\, and the launcher is the installed skill's.
 $here = Split-Path -Parent $PSScriptRoot
-$skillDir = Join-Path $HOME '.claude\skills\deepseek-agents'
+$skillDir = Join-Path $HOME '.agents\skills\deepseek-agents'
 $inHarness = Test-Path (Join-Path $here 'launcher\ds-agent.ps1')
 # Installed as part of the skill, the launcher sits beside tools\ instead: act on the current folder too.
 $inSkill = -not $inHarness -and (Test-Path (Join-Path $here 'ds-agent.ps1'))

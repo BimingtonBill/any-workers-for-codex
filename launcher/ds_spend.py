@@ -30,7 +30,7 @@ CLAUDE_TIGHT_HEAD, so DeepSeek takes more of the work; the limits themselves nev
 ds-agent.ps1 calls the rest itself: check (before a worker starts), poll (every 15 seconds while it
 runs: `live` and ds_steer.py `watch` in one process, reading only the transcript lines added since the
 last poll) and record (when it ends, from the whole transcript). `live` and `watch` still work alone. Everything lives in one folder shared by every project, so a limit
-covers all of them: DS_SPEND_DIR, else ~/.claude-deepseek/spend. It holds limits.json, spend.jsonl (one
+covers all of them: DS_SPEND_DIR, else ~/.codex-workers/spend. It holds limits.json, spend.jsonl (one
 line per finished run) and live/ (what each running worker has spent so far).
 
 Costs are worked out from the token counts in each worker's transcript at DeepSeek's list prices
@@ -542,7 +542,7 @@ def check(d, kind, balance=None, now=None, provider='deepseek'):
         left = cap - used
         if left <= 0:
             return False, ['%s spend limit reached: $%.2f of $%.2f %s. It resets at %s. Do this work '
-                           'as a Claude subagent on Sonnet 5.5, on another provider, or ask the user to raise the limit (python ds_spend.py '
+                           'with Codex, on another supported provider, or ask the user to raise the limit (python ds_spend.py '
                            'set <dollars> --per %s%s).' % (name, used, cap, label(period), resets(period, now, d), period, flag)]
         if est > left:
             return False, ['A %s worker on %s usually costs about $%.2f, and only $%.2f of the $%.2f %s limit is '
@@ -605,19 +605,8 @@ def waited_logged(d, run_id):
 
 
 def claude_level(d, now=None):
-    """The Claude plan's pace level (ds_claude.py beside this file; 0 without it or without a reading)."""
-    try:
-        import ds_claude
-        return ds_claude.level(d, now)
-    except Exception:
-        return 0
-
-
-# --- The DeepSeek balance ---
-
-LOW_DAYS = 2        # warn when the balance lasts fewer days than this at the last week's rate (was 7: with a
-                    # week-long stretch that warned every session; the user wants it only when very low, 2026-09-27)
-LOW_USD = 2.0       # or when it is below this, whatever the rate
+    """No automatic Codex account-usage telemetry; compatibility seam."""
+    return 0
 
 
 def api_key():
@@ -775,8 +764,8 @@ def plan(d, kind, balance=None, now=None, lineage='', waited=False, provider='de
                 if p['fits_at'] else 'it fits again after the reset at %s' % resets(p['period'], now, d))
         out.update(ok=False, lines=['%s, so %s wait (%s). %s' % (
             ahead, 'all new workers' if ease >= 4 else '%s workers' % kind, when, both if claude_level(d, now) >= 2 else
-            'Run it as a Claude subagent on Sonnet 5.5 instead (Opus if the work needs judgment), or wait.' if ease >= 4 else
-            'Run it as a Claude subagent on Sonnet 5.5 instead (Opus if the work needs judgment), split off the parts a research or review worker can do, or wait.')])
+            'Have Codex handle it within its current permissions, or wait.' if ease >= 4 else
+            'Have Codex handle it within its current permissions, split off the parts a research or review worker can do, or wait.')])
         return out
     out['effort_cap'] = 'high' if ease == 1 else 'low'
     mine = set(filter(None, lineage.split('/')))
@@ -1040,7 +1029,7 @@ def live_stop(d, a, c):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    ap.add_argument('--dir', help='the spend folder (default: DS_SPEND_DIR or ~/.claude-deepseek/spend)')
+    ap.add_argument('--dir', help='the spend folder (default: DS_SPEND_DIR or ~/.codex-workers/spend)')
     sub = ap.add_subparsers(dest='cmd', required=True)
     s = sub.add_parser('status'); s.add_argument('--balance', type=float)
     s.add_argument('--offline', action='store_true', help='use the saved balance instead of asking DeepSeek')

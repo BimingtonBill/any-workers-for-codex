@@ -69,7 +69,7 @@ foreach ($b in $Briefs) {
     # serialises the spend claims. At 800 ms after every child, four readers waited 3.2 s.
     if ($jobs.Count -lt $Briefs.Count) { Start-Sleep -Milliseconds 200 }
 }
-Write-Output "[ds-spawn] started $($jobs.Count) worker(s) under $(if ($env:DS_RUN_ID) { $env:DS_RUN_ID } else { 'Claude' }): $($jobs.Label -join ', ')"
+Write-Output "[ds-spawn] started $($jobs.Count) worker(s) under $(if ($env:DS_RUN_ID) { $env:DS_RUN_ID } else { 'Codex' }): $($jobs.Label -join ', ')"
 
 $deadline = (Get-Date).AddMinutes($TimeoutMinutes + 2)
 foreach ($j in $jobs) {
@@ -84,7 +84,7 @@ foreach ($j in $jobs) {
 
 # Where the launcher keeps run records, by the launcher's own rule (launcher/ds-state.ps1, beside this
 # script): DS_STATE_DIR, then the project's "stateDir", then local/agents when local/ exists, else
-# ~/.claude-deepseek/agents. Only used to tell the lead where each report is saved.
+# ~/.codex-workers/agents. Only used to tell the lead where each report is saved.
 $stateDir = & (Join-Path $PSScriptRoot 'ds-state.ps1') -Dir $Dir
 
 $failed = 0

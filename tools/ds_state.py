@@ -5,7 +5,7 @@
 
 launcher/ds-state.ps1 is the rule: DS_STATE_DIR, else the project's .deepseek-agents.json "stateDir"
 (absolute as-is, otherwise joined onto the project), else <project>/local/agents when <project>/local
-exists, else ~/.claude-deepseek/agents. This module runs that script and returns what it printed, so no
+exists, else ~/.codex-workers/agents. This module runs that script and returns what it printed, so no
 Python caller keeps a second copy of the rule. fallback_dir() below is that second copy - one small
 function, used only when the script cannot be found or does not answer.
 """
@@ -34,7 +34,7 @@ def launcher_dir(name='ds-state.ps1'):
     installed (the launcher's files sit beside tools/); anywhere else the tools were copied into a project's
     tools/ and the launcher is the installed skill's. None when not found."""
     root = Path(__file__).resolve().parents[1]
-    for folder in (root / 'launcher', root, Path.home() / '.claude' / 'skills' / 'deepseek-agents'):
+    for folder in (root / 'launcher', root, Path.home() / '.agents' / 'skills' / 'deepseek-agents'):
         if (folder / name).is_file():
             return folder
     return None
@@ -94,4 +94,4 @@ def fallback_dir(project=None, env=None):
         return configured if configured.is_absolute() else project / configured
     if (project / 'local').is_dir():
         return project / 'local' / 'agents'
-    return Path.home() / '.claude-deepseek' / 'agents'
+    return Path.home() / '.codex-workers' / 'agents'

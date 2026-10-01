@@ -1,21 +1,21 @@
-"""The delegation level: how much Claude hands to DeepSeek workers, from 1 (only when asked) to 5 (everything).
+"""The delegation level: how much Codex hands to DeepSeek workers, from 1 (only when asked) to 5 (everything).
 
     python tools/ds_delegation.py                     the effective level here, where it comes from, and what it means
     python tools/ds_delegation.py --set 4             set it for this project (.deepseek-agents.json "delegationLevel")
-    python tools/ds_delegation.py --set 3 --global    set your default for every project (~/.claude-deepseek/config.json)
+    python tools/ds_delegation.py --set 3 --global    set your default for every project (~/.codex-workers/config.json)
     python tools/ds_delegation.py --set 4 --agents-md also write the level's rules into this project's AGENTS.md
     python tools/ds_delegation.py --table             all five levels
 
 Where the level comes from, first match wins: the DS_DELEGATION_LEVEL environment variable, the project's
-.deepseek-agents.json, ~/.claude-deepseek/config.json, else 3.
+.deepseek-agents.json, ~/.codex-workers/config.json, else 3.
 
 The scale used to run from 0 to 10, stored as "delegation" (and DS_DELEGATION). Those still work: when
 no 1-5 value is set at the same place, an old value is read and mapped (0-2 -> 1, 3-4 -> 2, 5-6 -> 3,
 7-8 -> 4, 9-10 -> 5). --set writes the new key and drops the old one.
 
-The level steers Claude, not the workers, so Claude has to see it. The deepseek-agents skill reads it,
+The level steers Codex, not the workers, so Codex has to see it. The deepseek-agents skill reads it,
 but the skill only loads when workers come up. --agents-md puts the rules in the project's AGENTS.md,
-which Claude reads at the start of every session; without it, levels above 3 can't make Claude reach
+which Codex reads at the start of every session; without it, levels above 3 can't make Codex reach
 for workers unprompted.
 """
 import argparse
@@ -26,23 +26,23 @@ import sys
 from pathlib import Path
 
 DEFAULT = 3
-GLOBAL_CONFIG = Path.home() / '.claude-deepseek' / 'config.json'
+GLOBAL_CONFIG = Path.home() / '.codex-workers' / 'config.json'
 # Where tools/install-skill.ps1 puts this script.
-INSTALLED_TOOL = Path.home() / '.claude' / 'skills' / 'deepseek-agents' / 'tools' / 'ds_delegation.py'
+INSTALLED_TOOL = Path.home() / '.agents' / 'skills' / 'deepseek-agents' / 'tools' / 'ds_delegation.py'
 BEGIN = '<!-- ds-delegation:begin (managed by DeepSeek Workers/tools/ds_delegation.py; edit with --set) -->'
 END = '<!-- ds-delegation:end -->'
 
-# What Claude keeps at every level: quality does not scale down with the dial.
-ALWAYS = ('At every level Claude keeps: talking to the user, design and architecture decisions, '
+# What Codex keeps at every level: quality does not scale down with the dial.
+ALWAYS = ('At every level Codex keeps: talking to the user, design and architecture decisions, '
           'integration into the main checkout, security-sensitive changes, and review of every worker '
           'result it acts on (spot-check the claims that matter; read the full diff of any edit). '
-          'Whenever workers are running, Claude works in parallel on something that cannot collide with '
+          'Whenever workers are running, Codex works in parallel on something that cannot collide with '
           'them (the next brief, integration plumbing, the previous review, its own tests and builds), '
           'and starts its own long builds and conversions in the background too; a worker run is not '
           'a wait.')
-# From level 2 up, web lookups are a standard delegated step rather than Claude's own searching: a
+# From level 2 up, web lookups are a standard delegated step rather than Codex's own searching: a
 # websearch worker has no file access, so a bad page can't reach the project (docs/design/websearch-injection.md).
-WEB_LOOKUP_FROM = 2
+WEB_LOOKUP_FROM = 6
 WEB_LOOKUP = ('Web lookups: when a task needs information from outside the project (library or tool versions, '
               'changelogs, API documentation, an error message, how others solved something), send a DeepSeek '
               'websearch worker (-Kind websearch) instead of searching yourself; only a single quick search you '
@@ -55,24 +55,24 @@ MISSING_TOOLS = ('Missing tools: before starting a job, check that the tools it 
                  'approach or a hand-written substitute. Continue without it only if the user chooses to.')
 
 LEVELS = {
-    1: ('Only when asked', 'Claude does the work itself and launches a worker only when the user asks for '
+    1: ('Only when asked', 'Codex does the work itself and launches a worker only when the user asks for '
                            'one in this conversation.'),
     2: ('Research and review', 'Delegate research that takes more than a few searches, large read-only '
                                'surveys (many files, big dumps, long logs), independent reviews and '
-                               'analyses of finished runs. Claude writes all code.'),
+                               'analyses of finished runs. Codex writes all code.'),
     3: ('Balanced (default)', 'As 2, plus bounded, self-contained implementation (a new parser, validator, '
                               'tool or test file with a fixed interface) through tools/ds_impl.ps1, and any '
                               'task that can be written as a standalone brief with a clear check. Run '
                               'independent tasks in parallel, with an independent reviewer on implementation. '
-                              'Claude keeps anything touching shared interfaces or more than a few files.'),
-    4: ('Claude manages', 'Claude plans, writes briefs, reviews and integrates; workers do the exploration '
+                              'Codex keeps anything touching shared interfaces or more than a few files.'),
+    4: ('Codex manages', 'Codex plans, writes briefs, reviews and integrates; workers do the exploration '
                           'and most coding, including multi-file changes in their own worktrees with '
-                          'owned-file lists. Claude avoids reading source beyond what review needs: ask a '
+                          'owned-file lists. Codex avoids reading source beyond what review needs: ask a '
                           'worker to locate, summarize or trace code instead. Keep several workers busy, and '
-                          'use a DeepSeek lead (-CanSpawn) for jobs that split into independent parts.'),
-    5: ('Everything', 'Claude only orchestrates: every task, even small edits and lookups, goes to a worker. '
-                      'Claude reads briefs, reports and diffs, integrates, and talks to the user. If no '
-                      'worker can do a step (it needs this conversation, a GUI, or the user), Claude does it '
+                          'use host-side ds-spawn.ps1 for independent read tasks.'),
+    5: ('Everything', 'Codex only orchestrates: every task, even small edits and lookups, goes to a worker. '
+                      'Codex reads briefs, reports and diffs, integrates, and talks to the user. If no '
+                      'worker can do a step (it needs this conversation, a GUI, or the user), Codex does it '
                       'and says why.'),
 }
 KEY, LEGACY_KEY = 'delegationLevel', 'delegation'
@@ -177,7 +177,7 @@ def agents_block(level):
         MISSING_TOOLS,
         '',
         'This block is generated. Change the level with `python "%s" --set <1-5> --agents-md` '
-        'from this folder, or ask Claude to. The full scale is in the deepseek-agents skill.'
+        'from this folder, or ask Codex to. The full scale is in the deepseek-agents skill.'
         % INSTALLED_TOOL.as_posix(),
         END,
     ])
@@ -214,7 +214,7 @@ def paced_level(level):
             try:
                 import ds_spend
                 return ds_spend.lowered(level, ds_spend.spend_dir())
-            except Exception:  # a broken spend record must never stop Claude reading its level
+            except Exception:  # a broken spend record must never stop Codex reading its level
                 return level
             finally:
                 sys.path.remove(str(folder))

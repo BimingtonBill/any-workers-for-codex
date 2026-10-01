@@ -93,7 +93,7 @@ def save_meta(d, m):
 def launcher():
     here = Path(__file__).resolve().parent
     for p in (here.parent / 'launcher' / 'ds-agent.ps1', here.parent / 'ds-agent.ps1',
-              Path.home() / '.claude' / 'skills' / 'deepseek-agents' / 'ds-agent.ps1'):
+              Path.home() / '.agents' / 'skills' / 'deepseek-agents' / 'ds-agent.ps1'):
         if p.is_file():
             return p
     return 'ds-agent.ps1'

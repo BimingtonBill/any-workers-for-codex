@@ -1,5 +1,5 @@
 {
-  "_about": "Model providers a worker can run on. Prices are US dollars per million tokens. The launcher's default is deepseek, and its entry reproduces the harness's behaviour before providers existed. User overrides and opt-ins go in ~/.claude-deepseek/providers.json, never in a project.",
+  "_about": "Upstream prices/model identifiers retained. Chat Completions endpoints are explicit. Prices are estimates; confirm in your provider dashboard.",
   "default": "deepseek",
   "providers": {
     "deepseek": {
@@ -26,7 +26,9 @@
         "fresh_in": 0.28,
         "cache_write": 0.28,
         "out": 0.42
-      }
+      },
+      "chatBaseUrl": "https://api.deepseek.com",
+      "chatModel": "deepseek-flash"
     },
     "meta": {
       "name": "Meta Muse Spark",
@@ -85,7 +87,8 @@
         "cache_write": 2.5,
         "out": 10.0
       },
-      "unverified": "GPT-6.1 Sol (released 2026-09-29; model id gpt-6.1-sol, $2 / $10 per million, $0.10 cached, 1.05M context, prompts over 272K tokens cost 2x input and 1.5x output) through OpenRouter's Anthropic-format endpoint. OpenRouter says Claude Code is optimised for Anthropic models and other providers may not work correctly: tool calls, thinking, prompt caching and the effort setting are unproven here. OpenRouter charges a fee when credits are bought, which the recorded spend does not include. No balance check: OpenRouter has a credits endpoint that is not wired in."
+      "unverified": "GPT-6.1 Sol (released 2026-09-29; model id gpt-6.1-sol, $2 / $10 per million, $0.10 cached, 1.05M context, prompts over 272K tokens cost 2x input and 1.5x output) through OpenRouter's Anthropic-format endpoint. OpenRouter says Claude Code is optimised for Anthropic models and other providers may not work correctly: tool calls, thinking, prompt caching and the effort setting are unproven here. OpenRouter charges a fee when credits are bought, which the recorded spend does not include. No balance check: OpenRouter has a credits endpoint that is not wired in.",
+      "chatBaseUrl": "https://openrouter.ai/api/v1"
     },
     "xiaomi": {
       "name": "Xiaomi MiMo",

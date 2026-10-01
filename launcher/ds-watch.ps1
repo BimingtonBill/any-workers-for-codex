@@ -16,7 +16,7 @@
   <lead> and <run> are run ids (research-003-x.1) or task ids (research-003-x, meaning its newest
   attempt). Runs are read from the manifest: -StateDir, else the launcher's state-dir rule
   (launcher/ds-state.ps1): DS_STATE_DIR, the current folder's "stateDir", then <current
-  folder>\local\agents, then the shared ~\.claude-deepseek\agents. Stopping a watcher does not stop the
+  folder>\local\agents, then the shared ~\.codex-workers\agents. Stopping a watcher does not stop the
   worker; use tools/ds_status.ps1 -Stop <label> for that.
 
 .EXAMPLE

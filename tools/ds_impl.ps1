@@ -56,7 +56,7 @@ function Invoke-Native([scriptblock]$Block) {
 # DS_PROJECT or the current folder, and the launcher is the harness's. Copied into a project's tools\: the
 # project is DS_PROJECT or the folder above tools\, and the launcher is the installed skill's.
 $here = Split-Path -Parent $PSScriptRoot
-$skillDir = Join-Path $HOME '.claude\skills\deepseek-agents'
+$skillDir = Join-Path $HOME '.agents\skills\deepseek-agents'
 $inHarness = Test-Path (Join-Path $here 'launcher\ds-agent.ps1')
 # Installed as part of the skill, the launcher sits beside tools\ instead: act on the current folder too.
 $inSkill = -not $inHarness -and (Test-Path (Join-Path $here 'ds-agent.ps1'))
@@ -487,7 +487,8 @@ $scoped = [ordered]@{
     readOnlyDirs = @($config.readOnlyDirs | Where-Object { $_ }) + @(
         Get-ChildItem (Join-Path $root 'local') -Directory -ErrorAction SilentlyContinue |
             Where-Object { $_.Name -notin @('impl', 'agents') } | ForEach-Object { $_.FullName }) + @($runFolders)
-    denyEdit     = @($keptDenies) + @(Get-TaskLinks | ForEach-Object { "$_/**" })
+    denyRead     = @($config.denyRead | Where-Object { $_ })
+    denyEdit     = @($config.denyEdit | Where-Object { $_ }) + @(Get-TaskLinks | ForEach-Object { "$_/**" })
     # A project may set implAllowTools in .deepseek-agents.json; otherwise python plus the rules for each kind
     # of project detected above. implAllowTools replaces the default set; the project's own allowTools are
     # always kept too (H4), and so are the brief's acceptance commands.
@@ -566,15 +567,18 @@ if ($outside) { "[ds-impl] OUT OF SCOPE: $($outside -join ', ')" } else { "[ds-i
 # Acceptance: the brief's own commands, run in the worktree.
 $results = @()
 foreach ($check in $checks) {
-    $command = "Set-Location '$work'; $check"
+    $escapedWork = $work.Replace("'", "''")
+    $command = "Set-Location -LiteralPath '$escapedWork'; $check"
+    # Preserve quotes inside Python/Node acceptance commands across Windows PowerShell's native argv.
+    $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
     # unittest reports on stderr; that is not a failure here
-    $output = Invoke-Native { & powershell -NoProfile -ExecutionPolicy Bypass -Command $command 2>&1 } | Out-String
+    $output = Invoke-Native { & powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedCommand 2>&1 } | Out-String
     $code = $LASTEXITCODE
     $results += [pscustomobject]@{ Check = $check; Exit = $code }
     $tail = ($output -split "`n" | Where-Object { $_.Trim() } | Select-Object -Last 3) -join ' / '
     "[ds-impl] accept($code): $check -- $tail"
 }
-$accepted = ($results.Count -gt 0 -and -not ($results | Where-Object { $_.Exit -ne 0 }) -and -not $outside)
+$accepted = ($status -eq 'ok' -and $results.Count -gt 0 -and -not ($results | Where-Object { $_.Exit -ne 0 }) -and -not $outside)
 
 $row = '{0},{1},implementation,{2},{3},{4},{5},{6},{7},{8},,,' -f $started.ToString('s'), $Name, $baseCommit.Substring(0, 7),
     $status, (-not $outside), @($results | Where-Object { $_.Exit -eq 0 }).Count, $results.Count,
@@ -595,5 +599,5 @@ $reviewTask = "Review coder task $Name. Its brief: $briefPath. You are working i
 # Reviewers could run nothing before (10 of 19 Project A reviews said so, 2026-09-25): allow the diff and the checks.
 $reviewRules = @('Bash(git status*)', 'Bash(git diff*)', 'Bash(git log *)', 'Bash(git show *)') + @($checks | Where-Object { $_ -and $_ -notmatch ',' } | ForEach-Object { "Bash($_)"; "Bash($_ *)" })
 "[ds-impl] next, in one message: start the next coder now, and this review worker for $Name beside it (it works in this worktree and builds only there):"
-"  powershell -NoProfile -ExecutionPolicy Bypass -File `"$agent`" -Kind review -Mode read -Effort high -Dir `"$work`" -AddDir `"$root`" -AllowTools `"$($reviewRules -join ',')`" -Label $reviewLabel -Task `"$reviewTask`""
+"  powershell -NoProfile -ExecutionPolicy Bypass -File `"$agent`" -Kind review -Mode read -Effort high -Dir `"$work`" -Label $reviewLabel -Task `"$reviewTask`""
 "[ds-impl] integrate $Name after reading the review; meanwhile do your own part (the next brief, integration wiring, checks of earlier work)."

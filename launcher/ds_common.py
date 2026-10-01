@@ -12,14 +12,14 @@ from pathlib import Path
 
 
 def spend_dir():
-    """The spend folder every project shares: DS_SPEND_DIR, else ~/.claude-deepseek/spend."""
-    return Path(os.environ.get('DS_SPEND_DIR') or Path.home() / '.claude-deepseek' / 'spend')
+    """The spend folder every project shares: DS_SPEND_DIR, else ~/.codex-workers/spend."""
+    return Path(os.environ.get('DS_SPEND_DIR') or Path.home() / '.codex-workers' / 'spend')
 
 
 def user_providers_path():
     """The user's own provider settings (opt-ins, plans, default tiers): DS_PROVIDERS_USER, else
-    ~/.claude-deepseek/providers.json."""
-    return Path(os.environ.get('DS_PROVIDERS_USER') or Path.home() / '.claude-deepseek' / 'providers.json')
+    ~/.codex-workers/providers.json."""
+    return Path(os.environ.get('DS_PROVIDERS_USER') or Path.home() / '.codex-workers' / 'providers.json')
 
 
 def parse_time(text):

@@ -88,7 +88,7 @@ def subject_of(label):
 
 def default_manifest(root=None, env=None):
     """The manifest the launcher writes for this project: the state dir the one rule picks - DS_STATE_DIR,
-    the project's stateDir, local/agents when the project has local/, else ~/.claude-deepseek/agents; see
+    the project's stateDir, local/agents when the project has local/, else ~/.codex-workers/agents; see
     ds_state, and launcher/ds-state.ps1 behind it - plus manifest.jsonl."""
     root = Path(root or ROOT)
     # A caller that passes env (the tests) is asking for that environment's answer, not this process's.
@@ -214,7 +214,7 @@ def table(runs):
         secs = r.get('seconds')
         lines.append('| `%s` | %s | %s | %s | %s | %s | %s | %s |' % (
             r['run_id'], r.get('kind', ''), (r.get('title') or '').replace('|', '/'),
-            r.get('parent_run_id') or 'Claude', r.get('state', ''), r.get('turns') or '',
+            r.get('parent_run_id') or 'Codex', r.get('state', ''), r.get('turns') or '',
             '%s / %s' % (fmt_tokens(r.get('tokens_in')), fmt_tokens(r.get('tokens_out'))),
             '%dm%02ds' % divmod(secs, 60) if secs is not None else ''))
     return '\n'.join(lines)
@@ -224,7 +224,7 @@ def tree(runs):
     children = {}
     for r in runs:
         children.setdefault(r.get('parent_run_id') or None, []).append(r)
-    lines = ['Claude (lead)']
+    lines = ['Codex (lead)']
     shown = set()
 
     def walk(parent, prefix):
